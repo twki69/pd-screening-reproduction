@@ -1,0 +1,10 @@
+# Pinned to the versions used to produce the reported results.
+numpy==2.4.4
+pandas==3.0.2
+scipy==1.17.1
+scikit-learn==1.8.0
+xgboost==3.4.1
+lightgbm==4.7.0
+catboost==1.2.10
+shap==0.52.0
+matplotlib==3.10.0
