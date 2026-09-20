@@ -176,17 +176,43 @@ def load_istanbul(root: str = "data") -> Cohort:
 
 
 def _extract_rar(rar_path: str, out_dir: str) -> None:
-    """Extract the Istanbul .rar (Colab: apt-get install unrar-free)."""
+    """Extract the Istanbul .rar, tolerating different extractor variants.
+
+    Colab ships the non-free ``unrar``, whose extract command is ``x``;
+    ``unrar-free`` accepts both ``x`` and ``-x``; ``unar`` and ``bsdtar``
+    use their own syntax. Rather than assume one, try each in turn and
+    check whether the expected CSV appeared.
+    """
     import shutil
     import subprocess
-    exe = shutil.which("unrar") or shutil.which("unrar-free") or shutil.which("unar")
-    if exe is None:
-        raise RuntimeError(
-            "No rar extractor found. On Colab run: "
-            "!apt-get -qq install -y unrar-free"
-        )
-    subprocess.run([exe, "-x", rar_path], cwd=out_dir, check=True,
-                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    rar_path = os.path.abspath(rar_path)
+    out_dir = os.path.abspath(out_dir)
+    target = os.path.join(out_dir, "pd_speech_features.csv")
+    attempts = []
+    for exe, args in (("unrar", ["x", "-y"]), ("unrar-free", ["x"]),
+                      ("unar", ["-f"]), ("bsdtar", ["-xf"]),
+                      ("7z", ["x", "-y"])):
+        path = shutil.which(exe)
+        if path is None:
+            continue
+        attempts.append(exe)
+        try:
+            subprocess.run([path, *args, rar_path], cwd=out_dir, check=False,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                           timeout=300)
+        except Exception:
+            continue
+        if os.path.exists(target):
+            return
+
+    raise RuntimeError(
+        "Could not extract the Istanbul archive.\n"
+        f"Extractors tried: {attempts or 'none found'}.\n"
+        "On Colab or Ubuntu run:  !apt-get -qq install -y unrar-free\n"
+        "Alternatively, extract pd_speech_features.rar manually and place "
+        f"pd_speech_features.csv in {out_dir}/."
+    )
 
 
 def harmonised_oxford(ox: Cohort) -> Cohort:
