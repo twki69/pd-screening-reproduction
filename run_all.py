@@ -7,6 +7,8 @@ Outputs are written to results/. With the seeds fixed below, the full run
 reproduces the published figures exactly on any machine.
 """
 import argparse, json, warnings
+import os
+os.makedirs("results", exist_ok=True)
 warnings.filterwarnings("ignore")
 
 import pandas as pd
