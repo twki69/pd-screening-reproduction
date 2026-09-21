@@ -44,13 +44,17 @@ def cluster_bootstrap_ci(df: pd.DataFrame, col: str, *, n_boot: int = 10000,
     independent, so the resampling unit is the repeat, not the fold.
     """
     rng = np.random.default_rng(seed)
-    repeats = df["repeat"].unique()
-    by_repeat = {r: df.loc[df["repeat"] == r, col].to_numpy() for r in repeats}
+    d = df.dropna(subset=[col])
+    if d.empty:
+        return (float("nan"), float("nan"))
+    repeats = d["repeat"].unique()
+    by_repeat = {r: d.loc[d["repeat"] == r, col].to_numpy() for r in repeats}
     means = np.empty(n_boot)
     for b in range(n_boot):
         pick = rng.choice(repeats, size=repeats.size, replace=True)
-        means[b] = np.concatenate([by_repeat[r] for r in pick]).mean()
-    lo, hi = np.percentile(means, [100 * alpha / 2, 100 * (1 - alpha / 2)])
+        vals = np.concatenate([by_repeat[r] for r in pick])
+        means[b] = np.nanmean(vals)
+    lo, hi = np.nanpercentile(means, [100 * alpha / 2, 100 * (1 - alpha / 2)])
     return float(lo), float(hi)
 
 
@@ -74,7 +78,7 @@ def summarise_models(fold_scores: pd.DataFrame,
     rows = []
     for name, g in fold_scores.groupby("model"):
         lo, hi = cluster_bootstrap_ci(g, metric)
-        per_repeat = g.groupby("repeat")[metric].mean()
+        per_repeat = g.dropna(subset=[metric]).groupby("repeat")[metric].mean()
         rows.append({
             "model": name,
             "mean": g[metric].mean(),
@@ -83,6 +87,7 @@ def summarise_models(fold_scores: pd.DataFrame,
             "ci_lo": lo, "ci_hi": hi,
             "min_fold": g[metric].min(), "max_fold": g[metric].max(),
             "n_folds": int(g[metric].notna().sum()),
+            "n_folds_undefined": int(g[metric].isna().sum()),
         })
     return (pd.DataFrame(rows).sort_values("mean", ascending=False)
             .reset_index(drop=True))

@@ -30,7 +30,9 @@ from sklearn.base import clone
 from sklearn.metrics import (balanced_accuracy_score, confusion_matrix,
                              f1_score, matthews_corrcoef, precision_score,
                              recall_score, roc_auc_score, roc_curve)
-from sklearn.model_selection import GridSearchCV, StratifiedGroupKFold
+from sklearn.model_selection import GridSearchCV
+
+from .splits import DeterministicStratifiedGroupKFold as StratifiedGroupKFold
 
 from .data import Cohort, HARMONISED_MAP
 from .cv import subject_aggregate

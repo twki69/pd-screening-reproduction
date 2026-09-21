@@ -26,7 +26,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.metrics import roc_auc_score
-from sklearn.model_selection import StratifiedGroupKFold
+from .splits import DeterministicStratifiedGroupKFold as StratifiedGroupKFold
 
 from .cv import subject_aggregate
 from .data import Cohort

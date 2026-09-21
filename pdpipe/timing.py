@@ -32,7 +32,9 @@ import time
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
-from sklearn.model_selection import GridSearchCV, StratifiedGroupKFold
+from sklearn.model_selection import GridSearchCV
+
+from .splits import DeterministicStratifiedGroupKFold as StratifiedGroupKFold
 
 from .data import Cohort
 
